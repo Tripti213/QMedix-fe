@@ -27,19 +27,23 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const isDashboard = location.pathname.includes('/dashboard');
-  const fetchUser = async () => {
+const fetchUser = async () => {
     try {
       const res = await api("get", "auth/me");
       console.log(res.data);
       setUser(res.data.user);
-    
-      // console.log(user);
+      
+      setLoading(false);
+      return res.data.user; // <-- WE ADDED THIS: Actually return the data!
+      
     } catch(error) {
       setUser(null);
       console.error("Auth fetch error:", error);
+      
+      setLoading(false);
+      return null; // <-- WE ADDED THIS: Return null if it fails
     }
-    setLoading(false);
-  };
+};
 
   useEffect(() => {
     fetchUser();
@@ -51,13 +55,16 @@ export default function App() {
     navigate('/');
   };
 
-  const handleLogin = async() => {
-const userFetched = await fetchUser();
-// console.log(userFetched)
-    if (userFetched.role === 'hospital-staff') {
+const handleLogin = async () => {
+    const userFetched = await fetchUser();
+    
+    // Safety check: Only navigate if userFetched actually exists
+    if (userFetched?.role === 'hospital-staff') {
       navigate('/staff/dashboard');
-    } else {
+    } else if (userFetched?.role) {
       navigate(`/${userFetched.role}/dashboard`);
+    } else {
+      console.error("Login failed, no role found.");
     }
   };
   // useEffect(() => {
